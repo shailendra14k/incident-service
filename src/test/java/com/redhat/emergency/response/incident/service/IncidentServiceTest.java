@@ -1,5 +1,7 @@
 package com.redhat.emergency.response.incident.service;
 
+import static net.javacrumbs.jsonunit.JsonMatchers.jsonNodePresent;
+import static net.javacrumbs.jsonunit.JsonMatchers.jsonPartEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -16,8 +18,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import javax.inject.Inject;
 
+import com.redhat.emergency.response.incident.entity.OutboxEvent;
 import com.redhat.emergency.response.incident.repository.IncidentRepository;
 import com.redhat.emergency.response.incident.entity.Incident;
+import com.redhat.emergency.response.incident.repository.OutboxEmitter;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.vertx.core.json.JsonArray;
@@ -34,11 +38,17 @@ public class IncidentServiceTest {
     @InjectMock
     IncidentRepository repository;
 
+    @InjectMock
+    OutboxEmitter outboxEmitter;
+
     @Inject
     IncidentService incidentService;
 
     @Captor
     ArgumentCaptor<Incident> incidentCaptor;
+
+    @Captor
+    ArgumentCaptor<OutboxEvent> outboxEventCaptor;
 
     @BeforeEach
     void init() {
@@ -98,6 +108,7 @@ public class IncidentServiceTest {
         assertThat(matched.getString("victimPhoneNumber"), equalTo(incident2.getVictimPhoneNumber()));
         assertThat(matched.getLong("timestamp"), equalTo(incident2.getTimestamp()));
         assertThat(matched.getString("status"), equalTo(incident2.getStatus()));
+        verify(repository).findAll();
     }
 
     @Test
@@ -148,6 +159,29 @@ public class IncidentServiceTest {
         assertThat(captured.isMedicalNeeded(), equalTo(true));
         assertThat(captured.getVictimName(), equalTo("John Doe"));
         assertThat(captured.getVictimPhoneNumber(), equalTo("(211) 456-78990"));
+
+        verify(outboxEmitter).emitEvent(outboxEventCaptor.capture());
+        OutboxEvent outboxEvent = outboxEventCaptor.getValue();
+        assertThat(outboxEvent, notNullValue());
+        assertThat(outboxEvent.getAggregateType(), equalTo("incident-event"));
+        assertThat(outboxEvent.getAggregateId(), equalTo(incidentEntity.getIncidentId()));
+        assertThat(outboxEvent.getType(), equalTo("IncidentReportedEvent"));
+        assertThat(outboxEvent.getPayload(), notNullValue());
+        String payload = outboxEvent.getPayload();
+        assertThat(payload, jsonNodePresent("id"));
+        assertThat(payload, jsonPartEquals("messageType", "IncidentReportedEvent"));
+        assertThat(payload, jsonPartEquals("invokingService", "IncidentService"));
+        assertThat(payload, jsonNodePresent("timestamp"));
+        assertThat(payload, jsonNodePresent("body"));
+        assertThat(payload, jsonPartEquals("body.id", incidentEntity.getIncidentId()));
+        assertThat(payload, jsonPartEquals("body.lat", new BigDecimal(incidentEntity.getLatitude()).doubleValue()));
+        assertThat(payload, jsonPartEquals("body.lon", new BigDecimal(incidentEntity.getLongitude()).doubleValue()));
+        assertThat(payload, jsonPartEquals("body.medicalNeeded", incidentEntity.isMedicalNeeded()));
+        assertThat(payload, jsonPartEquals("body.numberOfPeople", incidentEntity.getNumberOfPeople()));
+        assertThat(payload, jsonPartEquals("body.victimName", incidentEntity.getVictimName()));
+        assertThat(payload, jsonPartEquals("body.victimPhoneNumber", incidentEntity.getVictimPhoneNumber()));
+        assertThat(payload, jsonPartEquals("body.status", incidentEntity.getStatus()));
+        assertThat(payload, jsonPartEquals("body.timestamp", incidentEntity.getTimestamp()));
     }
 
     @Test
