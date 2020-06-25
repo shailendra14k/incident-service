@@ -253,6 +253,29 @@ public class IncidentServiceTest {
         assertThat(incidentEntity.getLongitude(), equalTo("-72.98765"));
         assertThat(incidentEntity.getStatus(), equalTo("ASSIGNED"));
         verify(repository).findByIncidentId("incident2");
+
+        verify(outboxEmitter).emitEvent(outboxEventCaptor.capture());
+        OutboxEvent outboxEvent = outboxEventCaptor.getValue();
+        assertThat(outboxEvent, notNullValue());
+        assertThat(outboxEvent.getAggregateType(), equalTo("incident-event"));
+        assertThat(outboxEvent.getAggregateId(), equalTo(incidentEntity.getIncidentId()));
+        assertThat(outboxEvent.getType(), equalTo("IncidentUpdatedEvent"));
+        assertThat(outboxEvent.getPayload(), notNullValue());
+        String payload = outboxEvent.getPayload();
+        assertThat(payload, jsonNodePresent("id"));
+        assertThat(payload, jsonPartEquals("messageType", "IncidentUpdatedEvent"));
+        assertThat(payload, jsonPartEquals("invokingService", "IncidentService"));
+        assertThat(payload, jsonNodePresent("timestamp"));
+        assertThat(payload, jsonNodePresent("body"));
+        assertThat(payload, jsonPartEquals("body.id", incidentEntity.getIncidentId()));
+        assertThat(payload, jsonPartEquals("body.lat", BigDecimal.valueOf(incident.getDouble("lat"))));
+        assertThat(payload, jsonPartEquals("body.lon", BigDecimal.valueOf(incident.getDouble("lon"))));
+        assertThat(payload, jsonPartEquals("body.medicalNeeded", incidentEntity.isMedicalNeeded()));
+        assertThat(payload, jsonPartEquals("body.numberOfPeople", incidentEntity.getNumberOfPeople()));
+        assertThat(payload, jsonPartEquals("body.victimName", incidentEntity.getVictimName()));
+        assertThat(payload, jsonPartEquals("body.victimPhoneNumber", incidentEntity.getVictimPhoneNumber()));
+        assertThat(payload, jsonPartEquals("body.status", incident.getString("status")));
+        assertThat(payload, jsonPartEquals("body.timestamp", incidentEntity.getTimestamp()));
     }
 
     @Test
@@ -424,7 +447,4 @@ public class IncidentServiceTest {
 
         verify(repository).deleteAll();
     }
-
-
-
 }
