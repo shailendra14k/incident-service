@@ -90,6 +90,23 @@ public class IncidentService {
         if (incident.getString("status") != null && !incident.getString("status").equals(current.getStatus())) {
             current.setStatus(incident.getString("status"));
         }
+
+        Message<IncidentEvent> message = new Message.Builder<>("IncidentUpdatedEvent", "IncidentService",
+                new IncidentEvent.Builder(current.getIncidentId())
+                        .lat(new BigDecimal(current.getLatitude()))
+                        .lon(new BigDecimal(current.getLongitude()))
+                        .medicalNeeded(current.isMedicalNeeded())
+                        .numberOfPeople(current.getNumberOfPeople())
+                        .timestamp(current.getTimestamp())
+                        .victimName(current.getVictimName())
+                        .victimPhoneNumber(current.getVictimPhoneNumber())
+                        .status(current.getStatus())
+                        .build())
+                .build();
+        String messageStr = Json.encode(message);
+        OutboxEvent outboxEvent = new OutboxEvent("incident-event", current.getIncidentId(), message.getMessageType(), messageStr);
+        outboxEmitter.emitEvent(outboxEvent);
+
         return fromEntity(current);
     }
 
