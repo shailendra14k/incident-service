@@ -1,19 +1,13 @@
 package com.redhat.emergency.response.incident.service;
 
-import java.math.BigDecimal;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import com.redhat.emergency.response.incident.message.IncidentEvent;
 import io.quarkus.vertx.ConsumeEvent;
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.operators.multi.processors.UnicastProcessor;
-import io.smallrye.reactive.messaging.kafka.KafkaRecord;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.mutiny.core.eventbus.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +18,6 @@ public class EventBusConsumer {
 
     @Inject
     IncidentService service;
-
-    private final UnicastProcessor<JsonObject> processor = UnicastProcessor.create();
 
     @ConsumeEvent(value = "incident-service", blocking = true)
     public void consume(Message<JsonObject> msg) {
@@ -89,33 +81,7 @@ public class EventBusConsumer {
     }
 
     private void createIncident(Message<JsonObject> msg) {
-        JsonObject created = service.create(msg.body());
-        processor.onNext(created);
+        service.create(msg.body());
         msg.replyAndForget(new JsonObject());
-    }
-
-    @Outgoing("incident-event-1")
-    public Multi<org.eclipse.microprofile.reactive.messaging.Message<String>> source() {
-        return processor.onItem().apply(this::toMessage);
-    }
-
-    private org.eclipse.microprofile.reactive.messaging.Message<String> toMessage(JsonObject incident) {
-        com.redhat.emergency.response.incident.message.Message<IncidentEvent> message
-                = new com.redhat.emergency.response.incident.message.Message.Builder<>("IncidentReportedEvent", "IncidentService",
-                    new IncidentEvent.Builder(incident.getString("id"))
-                        .lat(new BigDecimal(incident.getString("lat")))
-                        .lon(new BigDecimal(incident.getString("lon")))
-                        .medicalNeeded(incident.getBoolean("medicalNeeded"))
-                        .numberOfPeople(incident.getInteger("numberOfPeople"))
-                        .timestamp(incident.getLong("timestamp"))
-                        .victimName(incident.getString("victimName"))
-                        .victimPhoneNumber(incident.getString("victimPhoneNumber"))
-                        .status(incident.getString("status"))
-                        .build())
-                .build();
-        String json = Json.encode(message);
-        log.debug("Message: " + json);
-        return KafkaRecord.of(incident.getString("id"), json);
-
     }
 }
