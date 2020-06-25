@@ -1,10 +1,7 @@
 package com.redhat.emergency.response.incident.consumer;
 
-import static net.javacrumbs.jsonunit.JsonMatchers.jsonNodePresent;
-import static net.javacrumbs.jsonunit.JsonMatchers.jsonPartEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,20 +10,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import javax.enterprise.inject.Any;
 import javax.inject.Inject;
 
 import com.redhat.emergency.response.incident.service.IncidentService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
-import io.smallrye.reactive.messaging.connectors.InMemoryConnector;
-import io.smallrye.reactive.messaging.connectors.InMemorySink;
 import io.smallrye.reactive.messaging.kafka.IncomingKafkaRecord;
-import io.smallrye.reactive.messaging.kafka.OutgoingKafkaRecord;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -55,16 +47,12 @@ public class IncidentCommandMessageSourceTest {
     @Captor
     ArgumentCaptor<JsonObject> jsonObjectCaptor;
 
-    @Inject @Any
-    InMemoryConnector connector;
-
     private boolean messageAck = false;
 
     @BeforeEach
     void init() {
         initMocks(this);
         messageAck = false;
-        connector.sink("incident-event").clear();
     }
 
     @Test
@@ -94,7 +82,6 @@ public class IncidentCommandMessageSourceTest {
                 .put("status", "ASSIGNED");
 
         when(incidentService.updateIncident(any(JsonObject.class))).thenReturn(updated);
-        InMemorySink<String> results = connector.sink("incident-event");
 
         CompletionStage<CompletionStage<Void>> c =  source.processMessage(toRecord("incident1", json));
         c.toCompletableFuture().get();
@@ -107,27 +94,6 @@ public class IncidentCommandMessageSourceTest {
         assertThat(toUpdate.getLong("lat"), nullValue());
 
         assertThat(messageAck, equalTo(true));
-
-        assertThat(results.received().size(), equalTo(1));
-        org.eclipse.microprofile.reactive.messaging.Message<String> record = results.received().get(0);
-        assertThat(record, instanceOf(OutgoingKafkaRecord.class));
-        String value = record.getPayload();
-        String key = ((OutgoingKafkaRecord<String, String>)record).getKey();
-        assertThat(key, equalTo(updated.getString("id")));
-        assertThat(value, jsonNodePresent("id"));
-        assertThat(value, jsonPartEquals("messageType", "IncidentUpdatedEvent"));
-        assertThat(value, jsonPartEquals("invokingService", "IncidentService"));
-        assertThat(value, jsonNodePresent("timestamp"));
-        assertThat(value, jsonNodePresent("body"));
-        assertThat(value, jsonPartEquals("body.id", updated.getString("id")));
-        assertThat(value, jsonPartEquals("body.lat", new BigDecimal(updated.getString("lat")).doubleValue()));
-        assertThat(value, jsonPartEquals("body.lon", new BigDecimal(updated.getString("lon")).doubleValue()));
-        assertThat(value, jsonPartEquals("body.medicalNeeded", updated.getBoolean("medicalNeeded")));
-        assertThat(value, jsonPartEquals("body.numberOfPeople", updated.getInteger("numberOfPeople")));
-        assertThat(value, jsonPartEquals("body.victimName", updated.getString("victimName")));
-        assertThat(value, jsonPartEquals("body.victimPhoneNumber", updated.getString("victimPhoneNumber")));
-        assertThat(value, jsonPartEquals("body.status", updated.getString("status")));
-        assertThat(value, jsonPartEquals("body.timestamp", updated.getLong("timestamp")));
     }
 
     @Test
@@ -140,14 +106,11 @@ public class IncidentCommandMessageSourceTest {
                 "\"body\":{} " +
                 "}";
 
-        InMemorySink<String> results = connector.sink("incident-event");
-
         CompletionStage<CompletionStage<Void>> c =  source.processMessage(toRecord("incident1", json));
         c.toCompletableFuture().get();
 
         verify(incidentService, never()).updateIncident(any(JsonObject.class));
         assertThat(messageAck, equalTo(true));
-        assertThat(results.received().size(), equalTo(0));
     }
 
     private IncomingKafkaRecord<String, String> toRecord(String key, String payload) {
