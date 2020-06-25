@@ -9,9 +9,14 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
-import com.redhat.emergency.response.incident.repository.IncidentRepository;
 import com.redhat.emergency.response.incident.entity.Incident;
+import com.redhat.emergency.response.incident.entity.OutboxEvent;
+import com.redhat.emergency.response.incident.message.IncidentEvent;
+import com.redhat.emergency.response.incident.message.Message;
 import com.redhat.emergency.response.incident.model.IncidentStatus;
+import com.redhat.emergency.response.incident.repository.IncidentRepository;
+import com.redhat.emergency.response.incident.repository.OutboxEmitter;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -25,6 +30,9 @@ public class IncidentService {
     @Inject
     IncidentRepository repository;
 
+    @Inject
+    OutboxEmitter outboxEmitter;
+
     @Transactional
     public JsonArray incidents() {
         return new JsonArray(repository.findAll().stream().map(this::fromEntity).collect(Collectors.toList()));
@@ -33,6 +41,23 @@ public class IncidentService {
     @Transactional
     public JsonObject create(JsonObject incident) {
         Incident created = repository.create(toEntity(incident));
+
+        Message<IncidentEvent> message = new Message.Builder<>("IncidentReportedEvent", "IncidentService",
+                new IncidentEvent.Builder(created.getIncidentId())
+                        .lat(new BigDecimal(created.getLatitude()))
+                        .lon(new BigDecimal(created.getLongitude()))
+                        .medicalNeeded(created.isMedicalNeeded())
+                        .numberOfPeople(created.getNumberOfPeople())
+                        .timestamp(created.getTimestamp())
+                        .victimName(created.getVictimName())
+                        .victimPhoneNumber(created.getVictimPhoneNumber())
+                        .status(created.getStatus())
+                        .build())
+                .build();
+        
+        String messageStr = Json.encode(message);
+        OutboxEvent outboxEvent = new OutboxEvent("incident-event", created.getIncidentId(), message.getMessageType(), messageStr);
+        outboxEmitter.emitEvent(outboxEvent);
 
         return fromEntity(created);
     }
