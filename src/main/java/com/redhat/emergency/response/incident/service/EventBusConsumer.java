@@ -95,11 +95,11 @@ public class EventBusConsumer {
     }
 
     @Outgoing("incident-event-1")
-    public Multi<org.eclipse.microprofile.reactive.messaging.Message<String>> source() {
+    public  Multi<org.eclipse.microprofile.reactive.messaging.Message<com.redhat.emergency.response.incident.message.Message<?>>> source() {
         return processor.onItem().apply(this::toMessage);
     }
 
-    private org.eclipse.microprofile.reactive.messaging.Message<String> toMessage(JsonObject incident) {
+    private org.eclipse.microprofile.reactive.messaging.Message<com.redhat.emergency.response.incident.message.Message<?>> toMessage(JsonObject incident) {
         com.redhat.emergency.response.incident.message.Message<IncidentEvent> message
                 = new com.redhat.emergency.response.incident.message.Message.Builder<>("IncidentReportedEvent", "IncidentService",
                     new IncidentEvent.Builder(incident.getString("id"))
@@ -113,9 +113,6 @@ public class EventBusConsumer {
                         .status(incident.getString("status"))
                         .build())
                 .build();
-        String json = Json.encode(message);
-        log.debug("Message: " + json);
-        return KafkaRecord.of(incident.getString("id"), json);
-
+        return KafkaRecord.of(incident.getString("id"), message);
     }
 }

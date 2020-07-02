@@ -19,6 +19,7 @@
     <surefire-plugin.version>2.22.1</surefire-plugin.version>
     <smallrye.version>2.0.4</smallrye.version>
     <json-unit.version>2.18.0</json-unit.version>
+    <apicurio.version>1.2.2.Final</apicurio.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -67,6 +68,16 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-container-image-docker</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.apicurio</groupId>
+      <artifactId>apicurio-registry-client</artifactId>
+      <version>${apicurio.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.apicurio</groupId>
+      <artifactId>apicurio-registry-utils-serde</artifactId>
+      <version>${apicurio.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

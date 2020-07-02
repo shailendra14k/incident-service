@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "title": "IncidentReportedEvent",
+  "description": "Schema for IncidentReportedEvent message.",
+  "default": {},
+  "examples": [
+    {
+      "id": "524dc9ef-c2d4-475d-9d91-9d04b862a184",
+      "invokingService": "IncidentService",
+      "messageType": "IncidentReportedEvent",
+      "timestamp": 1591866868778,
+      "body": {
+        "id": "6ac57de7-4885-475a-a627-8a6128853a33",
+        "lat": 34.14338,
+        "lon": -77.86569,
+        "medicalNeeded": true,
+        "numberOfPeople": 3,
+        "status": "REPORTED",
+        "timestamp": 1591866868168,
+        "victimName": "victim",
+        "victimPhoneNumber": "111-111-111"
+      }
+    }
+  ],
+  "required": [
+    "id",
+    "invokingService",
+    "messageType",
+    "timestamp",
+    "body"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "$id": "#/properties/id",
+      "type": "string",
+      "title": "The id schema",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "524dc9ef-c2d4-475d-9d91-9d04b862a184"
+      ]
+    },
+    "invokingService": {
+      "$id": "#/properties/invokingService",
+      "type": "string",
+      "title": "The invokingService schema",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "IncidentService"
+      ]
+    },
+    "messageType": {
+      "$id": "#/properties/messageType",
+      "type": "string",
+      "title": "The messageType schema",
+      "description": "An explanation about the purpose of this instance.",
+      "default": "",
+      "examples": [
+        "IncidentReportedEvent"
+      ]
+    },
+    "timestamp": {
+      "$id": "#/properties/timestamp",
+      "type": "integer",
+      "title": "The timestamp schema",
+      "description": "An explanation about the purpose of this instance.",
+      "default": 0,
+      "examples": [
+        1591866868778
+      ]
+    },
+    "body": {
+      "$id": "#/properties/body",
+      "type": "object",
+      "title": "The body schema",
+      "description": "An explanation about the purpose of this instance.",
+      "default": {},
+      "examples": [
+        {
+          "id": "6ac57de7-4885-475a-a627-8a6128853a33",
+          "lat": 34.14338,
+          "lon": -77.86569,
+          "medicalNeeded": true,
+          "numberOfPeople": 3,
+          "status": "REPORTED",
+          "timestamp": 1591866868168,
+          "victimName": "victim",
+          "victimPhoneNumber": "111-111-111"
+        }
+      ],
+      "required": [
+        "id",
+        "lat",
+        "lon",
+        "medicalNeeded",
+        "numberOfPeople",
+        "status",
+        "timestamp",
+        "victimName",
+        "victimPhoneNumber"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$id": "#/properties/body/properties/id",
+          "type": "string",
+          "title": "The id schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": "",
+          "examples": [
+            "6ac57de7-4885-475a-a627-8a6128853a33"
+          ]
+        },
+        "lat": {
+          "$id": "#/properties/body/properties/lat",
+          "type": "number",
+          "title": "The lat schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": 0.0,
+          "examples": [
+            34.14338
+          ]
+        },
+        "lon": {
+          "$id": "#/properties/body/properties/lon",
+          "type": "number",
+          "title": "The lon schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": 0.0,
+          "examples": [
+            -77.86569
+          ]
+        },
+        "medicalNeeded": {
+          "$id": "#/properties/body/properties/medicalNeeded",
+          "type": "boolean",
+          "title": "The medicalNeeded schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": false,
+          "examples": [
+            true
+          ]
+        },
+        "numberOfPeople": {
+          "$id": "#/properties/body/properties/numberOfPeople",
+          "type": "integer",
+          "title": "The numberOfPeople schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": 0,
+          "examples": [
+            3
+          ]
+        },
+        "status": {
+          "$id": "#/properties/body/properties/status",
+          "type": "string",
+          "title": "The status schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": "",
+          "examples": [
+            "REPORTED"
+          ]
+        },
+        "timestamp": {
+          "$id": "#/properties/body/properties/timestamp",
+          "type": "integer",
+          "title": "The timestamp schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": 0,
+          "examples": [
+            1591866868168
+          ]
+        },
+        "victimName": {
+          "$id": "#/properties/body/properties/victimName",
+          "type": "string",
+          "title": "The victimName schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": "",
+          "examples": [
+            "victim"
+          ]
+        },
+        "victimPhoneNumber": {
+          "$id": "#/properties/body/properties/victimPhoneNumber",
+          "type": "string",
+          "title": "The victimPhoneNumber schema",
+          "description": "An explanation about the purpose of this instance.",
+          "default": "",
+          "examples": [
+            "111-111-111"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,5 @@
 package com.redhat.emergency.response.incident.service;
 
-import static net.javacrumbs.jsonunit.JsonMatchers.jsonNodePresent;
-import static net.javacrumbs.jsonunit.JsonMatchers.jsonPartEquals;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -19,6 +17,7 @@ import java.util.Map;
 import javax.enterprise.inject.Any;
 import javax.inject.Inject;
 
+import com.redhat.emergency.response.incident.message.IncidentEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.smallrye.reactive.messaging.connectors.InMemoryConnector;
@@ -323,7 +322,7 @@ public class EventBusConsumerTest {
 
         when(incidentService.create(Mockito.any(JsonObject.class))).thenReturn(incident);
 
-        InMemorySink<String> results = connector.sink("incident-event-1");
+        InMemorySink<com.redhat.emergency.response.incident.message.Message<IncidentEvent>> results = connector.sink("incident-event-1");
 
         Message<JsonObject> message = buildMessage(toCreate, Collections.singletonMap("action", "createIncident"));
         eventBusConsumer.consume(message);
@@ -335,25 +334,12 @@ public class EventBusConsumerTest {
         assertThat(body.isEmpty(), equalTo(true));
 
         assertThat(results.received().size(), equalTo(1));
-        org.eclipse.microprofile.reactive.messaging.Message<String> record = results.received().get(0);
+        org.eclipse.microprofile.reactive.messaging.Message<com.redhat.emergency.response.incident.message.Message<IncidentEvent>> record = results.received().get(0);
         assertThat(record, instanceOf(OutgoingKafkaRecord.class));
-        String value = record.getPayload();
-        String key = ((OutgoingKafkaRecord<String, String>)record).getKey();
+        com.redhat.emergency.response.incident.message.Message<IncidentEvent> value = record.getPayload();
+        String key = ((OutgoingKafkaRecord<String, com.redhat.emergency.response.incident.message.Message<IncidentEvent>>)record).getKey();
         assertThat(key, equalTo(incident.getString("id")));
-        assertThat(value, jsonNodePresent("id"));
-        assertThat(value, jsonPartEquals("messageType", "IncidentReportedEvent"));
-        assertThat(value, jsonPartEquals("invokingService", "IncidentService"));
-        assertThat(value, jsonNodePresent("timestamp"));
-        assertThat(value, jsonNodePresent("body"));
-        assertThat(value, jsonPartEquals("body.id", incident.getString("id")));
-        assertThat(value, jsonPartEquals("body.lat", new BigDecimal(incident.getString("lat")).doubleValue()));
-        assertThat(value, jsonPartEquals("body.lon", new BigDecimal(incident.getString("lon")).doubleValue()));
-        assertThat(value, jsonPartEquals("body.medicalNeeded", incident.getBoolean("medicalNeeded")));
-        assertThat(value, jsonPartEquals("body.numberOfPeople", incident.getInteger("numberOfPeople")));
-        assertThat(value, jsonPartEquals("body.victimName", incident.getString("victimName")));
-        assertThat(value, jsonPartEquals("body.victimPhoneNumber", incident.getString("victimPhoneNumber")));
-        assertThat(value, jsonPartEquals("body.status", incident.getString("status")));
-        assertThat(value, jsonPartEquals("body.timestamp", incident.getLong("timestamp")));
+        assertThat(value.getMessageType(), equalTo("IncidentReportedEvent"));
         verify(incidentService).create(jsonObjectCaptor.capture());
         JsonObject captured = jsonObjectCaptor.getValue();
         assertThat(captured, notNullValue());

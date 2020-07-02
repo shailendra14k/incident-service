@@ -77,11 +77,11 @@ public class IncidentCommandMessageSource {
     }
 
     @Outgoing("incident-event")
-    public Multi<org.eclipse.microprofile.reactive.messaging.Message<String>> source() {
+    public Multi<org.eclipse.microprofile.reactive.messaging.Message<Message<?>>> source() {
         return processor.onItem().apply(this::toMessage);
     }
 
-    private org.eclipse.microprofile.reactive.messaging.Message<String> toMessage(JsonObject incident) {
+    private org.eclipse.microprofile.reactive.messaging.Message<Message<?>> toMessage(JsonObject incident) {
         Message<IncidentEvent> message = new Message.Builder<>("IncidentUpdatedEvent", "IncidentService",
                 new IncidentEvent.Builder(incident.getString("id"))
                         .lat(new BigDecimal(incident.getString("lat")))
@@ -94,9 +94,7 @@ public class IncidentCommandMessageSource {
                         .status(incident.getString("status"))
                         .build())
                 .build();
-        String json = Json.encode(message);
-        log.debug("Message: " + json);
-        return KafkaRecord.of(incident.getString("id"), json);
+        return KafkaRecord.of(incident.getString("id"), message);
     }
 
 }
