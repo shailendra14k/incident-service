@@ -14,6 +14,7 @@ import com.redhat.emergency.response.incident.entity.Incident;
 import com.redhat.emergency.response.incident.model.IncidentStatus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ public class IncidentService {
         return new JsonArray(repository.findAll().stream().map(this::fromEntity).collect(Collectors.toList()));
     }
 
+    @SimplyTimed(name = "IncidentService.repository", tags = {"operation=create"}, absolute = true)
     @Transactional
     public JsonObject create(JsonObject incident) {
         Incident created = repository.create(toEntity(incident));
@@ -37,6 +39,7 @@ public class IncidentService {
         return fromEntity(created);
     }
 
+    @SimplyTimed(name = "IncidentService.repository", tags = {"operation=update"}, absolute = true)
     @Transactional
     public JsonObject updateIncident(JsonObject incident) {
         Incident current = repository.findByIncidentId(incident.getString("id"));
