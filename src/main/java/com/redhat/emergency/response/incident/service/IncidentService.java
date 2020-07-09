@@ -32,16 +32,23 @@ public class IncidentService {
     }
 
     @SimplyTimed(name = "IncidentService.repository", tags = {"operation=create"}, absolute = true)
-    @Transactional
     public JsonObject create(JsonObject incident) {
-        Incident created = repository.create(toEntity(incident));
+        return doCreate(incident);
+    }
 
+    @Transactional
+    JsonObject doCreate(JsonObject incident) {
+        Incident created = repository.create(toEntity(incident));
         return fromEntity(created);
     }
 
     @SimplyTimed(name = "IncidentService.repository", tags = {"operation=update"}, absolute = true)
-    @Transactional
     public JsonObject updateIncident(JsonObject incident) {
+        return doUpdate(incident);
+    }
+
+    @Transactional
+    JsonObject doUpdate(JsonObject incident) {
         Incident current = repository.findByIncidentId(incident.getString("id"));
         if (current == null) {
             log.warn("Incident with id '" + incident.getString("id") + "' not found in the database");
